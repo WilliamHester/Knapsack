@@ -6,32 +6,67 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
+import javax.lang.model.type.*;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by william on 6/11/15.
  */
-public class KnapsackProcessor extends AbstractProcessor {
+public final class KnapsackProcessor extends AbstractProcessor {
 
-    private static final String ANDROID_PREFIX = "android.";
-    private static final String JAVA_PREFIX = "java.";
-    private static final String SUFFIX = "$$Bundler";
+    static final String BINDER_FQCN = "android.os.Binder";
+    static final String BUNDLE_FQCN = "android.os.Bundle";
+    static final String PARCELABLE_FQCN = "android.os.Parcelable";
+    static final String SIZE_FQCN = "android.util.Size";
+    static final String SIZE_F_FQCN = "android.util.SizeF";
+    static final String ARRAY_LIST_FQCN = "java.util.ArrayList";
+    static final String SPARSE_ARRAY_FQCN = "android.util.SparseArray";
+    static final String SERIALIZABLE_FQCN = "java.io.Serializable";
+    static final String INTEGER_FQCN = "java.lang.Integer";
+    static final String BOOLEAN_FQCN = "java.lang.Boolean";
+    static final String DOUBLE_FQCN = "java.lang.Double";
+    static final String LONG_FQCN = "java.lang.Long";
+    static final String BYTE_FQCN = "java.lang.Byte";
+    static final String FLOAT_FQCN = "java.lang.Float";
+    static final String SHORT_FQCN = "java.lang.Short";
+    static final String CHARACTER_FQCN = "java.lang.Character";
+    static final String STRING_FQCN = "java.lang.String";
+    static final String CHAR_SEQUENCE_FQCN = "java.lang.CharSequence";
+
+    private TypeMirror arrayList;
+    private TypeMirror bundle;
+    private TypeMirror binder;
+    private TypeMirror parcelable;
+    private TypeMirror size;
+    private TypeMirror sizeF;
+    private TypeMirror sparseArray;
+    private TypeMirror serializable;
+    private TypeMirror intType;
+    private TypeMirror booleanType;
+    private TypeMirror doubleType;
+    private TypeMirror longType;
+    private TypeMirror byteType;
+    private TypeMirror floatType;
+    private TypeMirror shortType;
+    private TypeMirror charType;
+    private TypeMirror string;
+    private TypeMirror charSequence;
+
+    public static final String ANDROID_PREFIX = "android.";
+    public static final String JAVA_PREFIX = "java.";
+    public static final String SUFFIX = "$$Bundler";
 
     private Elements elementUtils;
     private Types typeUtils;
@@ -44,6 +79,25 @@ public class KnapsackProcessor extends AbstractProcessor {
         elementUtils = processingEnv.getElementUtils();
         typeUtils = processingEnv.getTypeUtils();
         filer = processingEnv.getFiler();
+
+        bundle = elementUtils.getTypeElement(BUNDLE_FQCN).asType();
+        binder = elementUtils.getTypeElement(BINDER_FQCN).asType();
+        parcelable = elementUtils.getTypeElement(PARCELABLE_FQCN).asType();
+        size = elementUtils.getTypeElement(SIZE_FQCN).asType();
+        sizeF = elementUtils.getTypeElement(SIZE_F_FQCN).asType();
+        arrayList = elementUtils.getTypeElement(ARRAY_LIST_FQCN).asType();
+        sparseArray = elementUtils.getTypeElement(SPARSE_ARRAY_FQCN).asType();
+        serializable = elementUtils.getTypeElement(SERIALIZABLE_FQCN).asType();
+        intType = elementUtils.getTypeElement(INTEGER_FQCN).asType();
+        booleanType = elementUtils.getTypeElement(BOOLEAN_FQCN).asType();
+        doubleType = elementUtils.getTypeElement(DOUBLE_FQCN).asType();
+        longType = elementUtils.getTypeElement(LONG_FQCN).asType();
+        byteType = elementUtils.getTypeElement(BYTE_FQCN).asType();
+        floatType = elementUtils.getTypeElement(FLOAT_FQCN).asType();
+        shortType = elementUtils.getTypeElement(SHORT_FQCN).asType();
+        charType = elementUtils.getTypeElement(CHARACTER_FQCN).asType();
+        string = elementUtils.getTypeElement(STRING_FQCN).asType();
+        charSequence = elementUtils.getTypeElement(CHAR_SEQUENCE_FQCN).asType();
     }
 
     @Override
@@ -73,7 +127,12 @@ public class KnapsackProcessor extends AbstractProcessor {
             }
         }
 
-        return false;
+        return true;
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
     }
 
     private Map<TypeElement, BundlingClass> findAndParseTargets(RoundEnvironment env) {
@@ -103,9 +162,9 @@ public class KnapsackProcessor extends AbstractProcessor {
             elementType = typeVariable.getUpperBound();
         }
 
-        if (!isCompatibleType(elementType)) {
-            error(element, "@Save can only be used on types that are compatible with Bundle's normal types.",
-                    enclosingElement.getQualifiedName(), element.getSimpleName());
+        FieldBundling bundling = getCompatibleType(element, elementType);
+        if (bundling == null) {
+            error(element, "@Save can only be used on types that are compatible with Bundle's normal types.");
             hasError = true;
         }
 
@@ -122,7 +181,7 @@ public class KnapsackProcessor extends AbstractProcessor {
             bundlingClass = targetClassMap.get(enclosingElement);
         }
 
-        bundlingClass.addField(element);
+        bundlingClass.addField(bundling);
 
         erasedTargetNames.add(enclosingElement.toString());
     }
@@ -189,8 +248,100 @@ public class KnapsackProcessor extends AbstractProcessor {
         return false;
     }
 
-    private boolean isCompatibleType(TypeMirror elementType) {
-        return Math.random() > 0.5; // Wildcard, bitches
+    private FieldBundling getCompatibleType(Element element, TypeMirror elementType) {
+        FieldBundling bundling = null;
+        String variableName = element.getSimpleName().toString();
+        if (elementType instanceof ArrayType) {
+            bundling = getCompatibleArrayType(((ArrayType) elementType).getComponentType(), variableName);
+        } else if (typeUtils.isAssignable(elementType, arrayList)) {
+            List<? extends TypeMirror> args = ((DeclaredType) elementType).getTypeArguments();
+            if (args.size() != 1) {
+                return null;
+            }
+            bundling = getCompatibleArrayListType(args.get(0), variableName);
+        } else if (typeUtils.isAssignable(elementType, sparseArray)) {
+            List<? extends TypeMirror> args = ((DeclaredType) elementType).getTypeArguments();
+            if (args.size() == 1 && typeUtils.isAssignable(args.get(0), parcelable)) {
+                bundling = new SimpleFieldBundling("SparseParcelableArray", variableName);
+            }
+        } else if (typeUtils.isAssignable(elementType, serializable)) {
+            bundling = new SerializableFieldBundling(elementType.toString(), variableName);
+        } else if (typeUtils.isAssignable(elementType, bundle)) {
+            bundling = new SimpleFieldBundling("Bundle", variableName);
+        } else if (typeUtils.isAssignable(elementType, binder)) {
+            bundling = new SimpleFieldBundling("Binder", variableName);
+        } else if (typeUtils.isAssignable(elementType, parcelable)) {
+            bundling = new SimpleFieldBundling("Parcelable", variableName);
+        } else if (typeUtils.isAssignable(elementType, size)) {
+            bundling = new SimpleFieldBundling("Size", variableName);
+        } else if (typeUtils.isAssignable(elementType, sizeF)) {
+            bundling = new SimpleFieldBundling("SizeF", variableName);
+        } else if (typeUtils.isAssignable(elementType, intType)) {
+            bundling = new SimpleFieldBundling("Int", variableName);
+        } else if (typeUtils.isAssignable(elementType, booleanType)) {
+            bundling = new SimpleFieldBundling("Boolean", variableName);
+        } else if (typeUtils.isAssignable(elementType, doubleType)) {
+            bundling = new SimpleFieldBundling("Double", variableName);
+        } else if (typeUtils.isAssignable(elementType, longType)) {
+            bundling = new SimpleFieldBundling("Long", variableName);
+        } else if (typeUtils.isAssignable(elementType, byteType)) {
+            bundling = new SimpleFieldBundling("Byte", variableName);
+        } else if (typeUtils.isAssignable(elementType, floatType)) {
+            bundling = new SimpleFieldBundling("Float", variableName);
+        } else if (typeUtils.isAssignable(elementType, shortType)) {
+            bundling = new SimpleFieldBundling("Short", variableName);
+        } else if (typeUtils.isAssignable(elementType, charType)) {
+            bundling = new SimpleFieldBundling("Char", variableName);
+        } else if (typeUtils.isAssignable(elementType, string)) {
+            bundling = new SimpleFieldBundling("String", variableName);
+        } else if (typeUtils.isAssignable(elementType, charSequence)) {
+            bundling = new SimpleFieldBundling("CharSequence", variableName);
+        }
+        return bundling;
+    }
+
+    private FieldBundling getCompatibleArrayType(TypeMirror componentType, String variableName) {
+        FieldBundling bundling = null;
+        if (typeUtils.isAssignable(componentType, byteType)) {
+            bundling = new ArrayFieldBundling("Byte", variableName);
+        } else if (typeUtils.isAssignable(componentType, shortType)) {
+            bundling = new ArrayFieldBundling("Short", variableName);
+        } else if (typeUtils.isAssignable(componentType, intType)) {
+            bundling = new ArrayFieldBundling("Int", variableName);
+        } else if (typeUtils.isAssignable(componentType, longType)) {
+            bundling = new ArrayFieldBundling("Long", variableName);
+        } else if (typeUtils.isAssignable(componentType, charType)) {
+            bundling = new ArrayFieldBundling("Char", variableName);
+        } else if (typeUtils.isAssignable(componentType, booleanType)) {
+            bundling = new ArrayFieldBundling("Boolean", variableName);
+        } else if (typeUtils.isAssignable(componentType, floatType)) {
+            bundling = new ArrayFieldBundling("Float", variableName);
+        } else if (typeUtils.isAssignable(componentType, doubleType)) {
+            bundling = new ArrayFieldBundling("Double", variableName);
+        } else if (typeUtils.isAssignable(componentType, string)) {
+            bundling = new ArrayFieldBundling("String", variableName);
+        } else if (typeUtils.isAssignable(componentType, charSequence)) {
+            bundling = new ArrayFieldBundling("CharSequence", variableName);
+        } else if (typeUtils.isAssignable(componentType, parcelable)) {
+            bundling = new ArrayFieldBundling("Parcelable", variableName);
+        }
+        return bundling;
+    }
+
+    private FieldBundling getCompatibleArrayListType(TypeMirror componentType, String variableName) {
+        FieldBundling bundling = null;
+        if (typeUtils.isAssignable(componentType, string)) {
+            bundling = new ArrayListFieldBundling("String", variableName);
+        } else if (typeUtils.isAssignable(componentType, charSequence)) {
+            bundling = new ArrayFieldBundling("CharSequence", variableName);
+        } else if (typeUtils.isAssignable(componentType, intType)) {
+            bundling = new ArrayFieldBundling("Integer", variableName);
+        } else if (typeUtils.isAssignable(componentType, parcelable)) {
+            bundling = new ArrayFieldBundling("Parcelable", variableName);
+        } else if (typeUtils.isAssignable(componentType, serializable)) {
+            bundling = new SerializableFieldBundling("ArrayList<" + componentType.toString() + ">", variableName);
+        }
+        return bundling;
     }
 
     private String getPackageName(TypeElement type) {
@@ -206,7 +357,7 @@ public class KnapsackProcessor extends AbstractProcessor {
         if (args.length > 0) {
             message = String.format(message, args);
         }
-        processingEnv.getMessager().printMessage(ERROR, message, element);
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, message, element);
     }
 
 }

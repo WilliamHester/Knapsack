@@ -7,8 +7,8 @@ import android.os.Bundle;
  */
 public interface Bundler {
 
-    void save(Bundle state);
+    void save(Bundle state, Object target);
 
-    void restore(Bundle state);
+    void restore(Bundle state, Object target);
 
 }
