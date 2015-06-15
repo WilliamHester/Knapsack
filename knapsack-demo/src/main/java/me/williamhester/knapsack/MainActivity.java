@@ -2,37 +2,34 @@ package me.williamhester.knapsack;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.widget.TextView;
 
+import java.util.ArrayList;
 
 public class MainActivity extends Activity {
+
+    @Save int mValue = -1;
+    @Save ArrayList<String> strings = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-    }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if (!Knapsack.restore(this, savedInstanceState)) {
+            mValue = 10;
+            for (int i = 0; i < 10; i++) {
+                strings.add(((char) i + 'a') + "");
+            }
         }
+        TextView tv = (TextView) findViewById(R.id.value);
+        tv.setText("" + mValue + " " + strings.toString());
+    }
 
-        return super.onOptionsItemSelected(item);
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        Knapsack.save(this, outState);
     }
 }

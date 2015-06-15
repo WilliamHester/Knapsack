@@ -1,6 +1,13 @@
 package me.williamhester.knapsack.internal;
 
-import me.williamhester.knapsack.Save;
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -11,15 +18,17 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.*;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
-import java.io.IOException;
-import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.util.*;
+
+import me.williamhester.knapsack.Save;
 
 /**
  * Created by william on 6/11/15.
@@ -264,8 +273,6 @@ public final class KnapsackProcessor extends AbstractProcessor {
             if (args.size() == 1 && typeUtils.isAssignable(args.get(0), parcelable)) {
                 bundling = new SimpleFieldBundling("SparseParcelableArray", variableName);
             }
-        } else if (typeUtils.isAssignable(elementType, serializable)) {
-            bundling = new SerializableFieldBundling(elementType.toString(), variableName);
         } else if (typeUtils.isAssignable(elementType, bundle)) {
             bundling = new SimpleFieldBundling("Bundle", variableName);
         } else if (typeUtils.isAssignable(elementType, binder)) {
@@ -296,6 +303,8 @@ public final class KnapsackProcessor extends AbstractProcessor {
             bundling = new SimpleFieldBundling("String", variableName);
         } else if (typeUtils.isAssignable(elementType, charSequence)) {
             bundling = new SimpleFieldBundling("CharSequence", variableName);
+        } else if (typeUtils.isAssignable(elementType, serializable)) {
+            bundling = new SerializableFieldBundling(elementType.toString(), variableName);
         }
         return bundling;
     }

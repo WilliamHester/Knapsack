@@ -18,7 +18,7 @@ class BundlingClass {
 
     private static final String[] imports = new String[] {
             BINDER_FQCN, BUNDLE_FQCN, PARCELABLE_FQCN, SIZE_FQCN, SIZE_F_FQCN, ARRAY_LIST_FQCN, SPARSE_ARRAY_FQCN,
-            SERIALIZABLE_FQCN
+            SERIALIZABLE_FQCN, "me.williamhester.knapsack.Bundler"
     };
 
     private final List<FieldBundling> fields = new ArrayList<>();
@@ -122,6 +122,8 @@ class BundlingClass {
                     .append("(\"").append(classPackage).append(".").append(className).append(".")
                     .append(bundling.getName()).append("\");\n");
         }
+
+        builder.append("    }\n");
     }
 
 

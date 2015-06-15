@@ -1,4 +1,4 @@
-package me.williamhester.knapsack.internal;
+package me.williamhester.knapsack;
 
 import android.os.Bundle;
 

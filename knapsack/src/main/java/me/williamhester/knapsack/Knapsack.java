@@ -1,11 +1,11 @@
 package me.williamhester.knapsack;
 
+import android.os.Bundle;
+import android.util.Log;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import android.os.Bundle;
-import android.util.Log;
-import me.williamhester.knapsack.internal.Bundler;
 import me.williamhester.knapsack.internal.KnapsackProcessor;
 
 /**
