@@ -30,7 +30,7 @@ public class Knapsack {
      * @param target the Fragment or Activity instance
      * @param state the bundle to be saved into.
      */
-    private static void save(Object target, Bundle state) {
+    public static void save(Object target, Bundle state) {
         try {
             Bundler bundler = getBundlerForClass(target.getClass());
             bundler.save(state, target);
