@@ -15,14 +15,14 @@ class BundlingClass {
     private static final String ARRAY_LIST_FQCN = "java.util.ArrayList";
     private static final String SPARSE_ARRAY_FQCN = "android.util.SparseArray";
     private static final String SERIALIZABLE_FQCN = "java.io.Serializable";
+    private static final String BUNDLER_FQCN = "me.williamhester.knapsack.Bundler";
 
     private static final String[] imports = new String[] {
-            BINDER_FQCN, BUNDLE_FQCN, PARCELABLE_FQCN, SIZE_FQCN, SIZE_F_FQCN, ARRAY_LIST_FQCN, SPARSE_ARRAY_FQCN,
-            SERIALIZABLE_FQCN, "me.williamhester.knapsack.Bundler"
+            BINDER_FQCN, BUNDLE_FQCN, PARCELABLE_FQCN, SIZE_FQCN, SIZE_F_FQCN,
+            ARRAY_LIST_FQCN, SPARSE_ARRAY_FQCN, SERIALIZABLE_FQCN, BUNDLER_FQCN
     };
 
     private final List<FieldBundling> fields = new ArrayList<>();
-//    private final Set<String> imports = new TreeSet<>();
 
     private final String classPackage;
     private final String className;
@@ -84,7 +84,9 @@ class BundlingClass {
                 .append("    public void save(Bundle state, Object in) {\n");
 
         if (parentBundler != null) {
-            builder.append("        super.save(state);\n\n");
+            builder.append("        super.save(state, in);\n\n");
+        } else {
+            builder.append("\n");
         }
         builder.append("        ")
                 .append(targetClass).append(" instance = (").append(targetClass).append(") in;\n");
@@ -103,6 +105,8 @@ class BundlingClass {
 
         if (parentBundler != null) {
             builder.append("        super.restore(state, in);\n\n");
+        } else {
+            builder.append("\n");
         }
         builder.append("        ")
                 .append(targetClass).append(" instance = (").append(targetClass).append(") in;\n");

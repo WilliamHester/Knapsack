@@ -19,11 +19,18 @@ public class Knapsack {
     private static final String JAVA_PREFIX = "java.";
     private static final String ANDROID_PREFIX = "android.";
 
-    private static final boolean debug = true;
+    private static final boolean debug = false;
 
     private static final Map<Class<?>, Bundler> BUNDLERS = new LinkedHashMap<>();
 
-    public static void save(Object target, Bundle state) {
+    /**
+     * This method saves the state of the Activity or Fragment that it is placed inside of. It only
+     * needs to be invoked from the superclass and all of its child classes will be saved as well.
+     *
+     * @param target the Fragment or Activity instance
+     * @param state the bundle to be saved into.
+     */
+    private static void save(Object target, Bundle state) {
         try {
             Bundler bundler = getBundlerForClass(target.getClass());
             bundler.save(state, target);
@@ -32,6 +39,15 @@ public class Knapsack {
         }
     }
 
+    /**
+     * This method restores the state of the Activity or Fragment that it is placed inside of. It
+     * only needs to be invoked from the superclass and all of its child classes will be saved as
+     * well.
+     *
+     * @param target the Fragment or Activity to restore.
+     * @param state the saved instance state to populate the Fragment or Activity with
+     * @return true if the state was restored.
+     */
     public static boolean restore(Object target, Bundle state) {
         if (state == null) {
             return false;

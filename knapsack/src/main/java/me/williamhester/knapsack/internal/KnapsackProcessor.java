@@ -31,6 +31,8 @@ import javax.tools.JavaFileObject;
 import me.williamhester.knapsack.Save;
 
 /**
+ * This class turns each annotation into a Bundle method.
+ *
  * Created by william on 6/11/15.
  */
 public final class KnapsackProcessor extends AbstractProcessor {
@@ -94,8 +96,10 @@ public final class KnapsackProcessor extends AbstractProcessor {
         parcelable = elementUtils.getTypeElement(PARCELABLE_FQCN).asType();
         size = elementUtils.getTypeElement(SIZE_FQCN).asType();
         sizeF = elementUtils.getTypeElement(SIZE_F_FQCN).asType();
-        arrayList = elementUtils.getTypeElement(ARRAY_LIST_FQCN).asType();
-        sparseArray = elementUtils.getTypeElement(SPARSE_ARRAY_FQCN).asType();
+        TypeElement arrayListElement = elementUtils.getTypeElement(ARRAY_LIST_FQCN);
+        arrayList = typeUtils.getDeclaredType(arrayListElement, typeUtils.getWildcardType(null, null));
+        TypeElement sparseArrayElement = elementUtils.getTypeElement(SPARSE_ARRAY_FQCN);
+        sparseArray = typeUtils.getDeclaredType(sparseArrayElement, typeUtils.getWildcardType(null, null));
         serializable = elementUtils.getTypeElement(SERIALIZABLE_FQCN).asType();
         intType = elementUtils.getTypeElement(INTEGER_FQCN).asType();
         booleanType = elementUtils.getTypeElement(BOOLEAN_FQCN).asType();
@@ -154,6 +158,14 @@ public final class KnapsackProcessor extends AbstractProcessor {
             } catch (Exception e) {
                 error(element, "There was a problem parsing @Save. Here's the StackTrace:");
                 e.printStackTrace();
+            }
+        }
+
+        // Try to find a parent binder for each.
+        for (Map.Entry<TypeElement, BundlingClass> entry : targetClassMap.entrySet()) {
+            String parentClassFqcn = findParentFqcn(entry.getKey(), erasedTargetNames);
+            if (parentClassFqcn != null) {
+                entry.getValue().setParentBundler(parentClassFqcn + SUFFIX);
             }
         }
 
@@ -342,15 +354,31 @@ public final class KnapsackProcessor extends AbstractProcessor {
         if (typeUtils.isAssignable(componentType, string)) {
             bundling = new ArrayListFieldBundling("String", variableName);
         } else if (typeUtils.isAssignable(componentType, charSequence)) {
-            bundling = new ArrayFieldBundling("CharSequence", variableName);
+            bundling = new ArrayListFieldBundling("CharSequence", variableName);
         } else if (typeUtils.isAssignable(componentType, intType)) {
-            bundling = new ArrayFieldBundling("Integer", variableName);
+            bundling = new ArrayListFieldBundling("Integer", variableName);
         } else if (typeUtils.isAssignable(componentType, parcelable)) {
-            bundling = new ArrayFieldBundling("Parcelable", variableName);
+            bundling = new ArrayListFieldBundling("Parcelable", variableName);
         } else if (typeUtils.isAssignable(componentType, serializable)) {
             bundling = new SerializableFieldBundling("ArrayList<" + componentType.toString() + ">", variableName);
         }
         return bundling;
+    }
+
+    /** Finds the parent binder type in the supplied set, if any. */
+    private String findParentFqcn(TypeElement typeElement, Set<String> parents) {
+        TypeMirror type;
+        while (true) {
+            type = typeElement.getSuperclass();
+            if (type.getKind() == TypeKind.NONE) {
+                return null;
+            }
+            typeElement = (TypeElement) ((DeclaredType) type).asElement();
+            if (parents.contains(typeElement.toString())) {
+                String packageName = getPackageName(typeElement);
+                return packageName + "." + getClassName(typeElement, packageName);
+            }
+        }
     }
 
     private String getPackageName(TypeElement type) {
