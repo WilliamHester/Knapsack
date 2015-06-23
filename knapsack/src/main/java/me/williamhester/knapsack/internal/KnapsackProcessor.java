@@ -345,6 +345,8 @@ public final class KnapsackProcessor extends AbstractProcessor {
             bundling = new ArrayFieldBundling("CharSequence", variableName);
         } else if (typeUtils.isAssignable(componentType, parcelable)) {
             bundling = new ArrayFieldBundling("Parcelable", variableName);
+        } else if (typeUtils.isAssignable(componentType, serializable)) {
+            bundling = new SerializableFieldBundling(componentType.toString() + "[]", variableName);
         }
         return bundling;
     }
@@ -360,7 +362,7 @@ public final class KnapsackProcessor extends AbstractProcessor {
         } else if (typeUtils.isAssignable(componentType, parcelable)) {
             bundling = new ArrayListFieldBundling("Parcelable", variableName);
         } else if (typeUtils.isAssignable(componentType, serializable)) {
-            bundling = new SerializableFieldBundling("ArrayList<" + componentType.toString() + ">", variableName);
+            bundling = new SerializableFieldBundling("java.util.ArrayList<" + componentType.toString() + ">", variableName);
         }
         return bundling;
     }

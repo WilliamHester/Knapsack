@@ -23,21 +23,31 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (!Knapsack.restore(this, savedInstanceState)) {
+        if (savedInstanceState == null) {
             mValue = 10;
             for (int i = 0; i < 10; i++) {
                 strings.add((char) (i + 'a') + "");
             }
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
         TextView tv = (TextView) findViewById(R.id.value);
-        tv.setText("" + mValue + " " + strings.toString());
+        tv.setText(getText());
+    }
+
+    protected String getText() {
+        return mValue + " " + strings.toString();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        Knapsack.save(this, outState);
+//        Knapsack.save(this, outState);
     }
 
     static class Thing implements Parcelable {

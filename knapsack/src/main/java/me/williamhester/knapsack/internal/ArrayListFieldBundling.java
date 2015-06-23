@@ -20,7 +20,7 @@ class ArrayListFieldBundling implements FieldBundling {
 
     @Override
     public String getType() {
-        return "ArrayList<" + type + ">";
+        return "java.util.ArrayList<" + type + ">";
     }
 
     @Override

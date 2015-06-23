@@ -1,7 +1,6 @@
 package me.williamhester.knapsack;
 
 import android.os.Bundle;
-import android.widget.TextView;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -9,7 +8,7 @@ import java.util.ArrayList;
 /**
  * Created by william on 6/18/15.
  */
-public class ChildActivity extends MainActivity {
+public class ChildActivity extends MiddleActivity {
 
     @Save int test;
     @Save ArrayList<Things> things = new ArrayList<>();
@@ -17,15 +16,14 @@ public class ChildActivity extends MainActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.activity_main);
-
         if (savedInstanceState == null) {
             test = 2;
         }
+    }
 
-        TextView t = (TextView) findViewById(R.id.value);
-        t.setText("" + 2);
+    @Override
+    protected String getText() {
+        return super.getText() + " " + test;
     }
 
     static class Things implements Serializable {

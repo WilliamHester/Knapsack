@@ -7,19 +7,11 @@ import java.util.*;
  */
 class BundlingClass {
 
-    private static final String BINDER_FQCN = "android.os.Binder";
     private static final String BUNDLE_FQCN = "android.os.Bundle";
-    private static final String PARCELABLE_FQCN = "android.os.Parcelable";
-    private static final String SIZE_FQCN = "android.util.Size";
-    private static final String SIZE_F_FQCN = "android.util.SizeF";
-    private static final String ARRAY_LIST_FQCN = "java.util.ArrayList";
-    private static final String SPARSE_ARRAY_FQCN = "android.util.SparseArray";
-    private static final String SERIALIZABLE_FQCN = "java.io.Serializable";
     private static final String BUNDLER_FQCN = "me.williamhester.knapsack.Bundler";
 
     private static final String[] imports = new String[] {
-            BINDER_FQCN, BUNDLE_FQCN, PARCELABLE_FQCN, SIZE_FQCN, SIZE_F_FQCN,
-            ARRAY_LIST_FQCN, SPARSE_ARRAY_FQCN, SERIALIZABLE_FQCN, BUNDLER_FQCN
+            BUNDLE_FQCN, BUNDLER_FQCN
     };
 
     private final List<FieldBundling> fields = new ArrayList<>();
